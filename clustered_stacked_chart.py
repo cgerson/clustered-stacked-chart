@@ -2,11 +2,9 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 
-from itertools import cycle
-
 class plotobject(object):
 
-    def __init__(self, df_original, my_two_segments, remove_parenthesis = True):
+    def __init__(self, data, my_two_segments, clean_segment_values = True):
 
         """
         df: pandas DataFrame with shape at least (1,3)
@@ -14,9 +12,9 @@ class plotobject(object):
         """
         # prepare df
 
-        df = df_original.copy() # copy the dataframe locally
+        df = data.copy() # copy the dataframe locally
 
-        if remove_parenthesis: # remove reference information in parenthesis if exists
+        if clean_segment_values: # remove reference information in parenthesis if exists
             for segment in my_two_segments:
                 df[segment] = df[segment].map(lambda x: re.sub(r'\([^)]*\)', '', x))
 
@@ -35,9 +33,11 @@ class plotobject(object):
         self.inner_segment = {'label': my_two_segments[1], 'level':1} # ex: Age
 
 
-    def rename_segment_values(self, segment, segment_mapping):
+    def _rename_segment_values(self, segment_and_segment_mapping):
 
         # ex: "Gender", {"Female": "Women", "Male": "Men"}
+
+        segment, segment_mapping = segment_and_segment_mapping
 
         df = self.df.copy()
         df.reset_index(inplace=True)
@@ -46,7 +46,7 @@ class plotobject(object):
         self.df = df
 
 
-    def plot(self, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency"):
+    def _plot_all(self, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency"):
 
         """
         Parameters:
@@ -194,3 +194,28 @@ class plotobject(object):
 
         # Set a buffer around the edge
         plt.xlim([min(tick_pos)-bar_width, max(tick_pos)+bar_width])
+
+
+def plot(data, my_two_segments, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency", rename_segment_values = False):
+
+    """
+    Parameters:
+    -----------
+    df: pandas DataFrame with shape at least (1,3)
+    my_two_segments: list of two columns in df. ex: ["Gender","Age"]
+    title: string
+    stylesheet: one of matplotlob's stylesheets, found with this command: print(plt.style.available)
+    chart_height: default is 120 to ensure legend doesn't block bar chart. assumes responses are frequencies out of 100
+    alpha: controls transparency of bars
+    bar_width: set the bar_width (recommend around 0.80 depending on number of bars), or allow it to be set programmatically
+    colors: list of hex values, or use the default
+    rename_segment_values: tuple where first element is segment label, second element is a mapping of new values. ex: ("Gender", {"Female": "Women", "Male": "Men"})
+
+    """
+
+    plotobj = plotobject(data, my_two_segments)
+
+    if rename_segment_values:
+        plotobj._rename_segment_values(rename_segment_values)
+
+    plotobj._plot_all(title = title, stylesheet = stylesheet, chart_height = chart_height, alpha = alpha, bar_width = bar_width, colors = colors, write_to_disk = write_to_disk, ylabel = ylabel)
