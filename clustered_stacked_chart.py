@@ -107,12 +107,13 @@ class plotobject(object):
         fig.suptitle(title, fontsize="x-large")
         plt.tight_layout(pad=0., w_pad=0.0, h_pad=0.0)
 
-        plt.show()
-
         if write_to_disk:
-            full_path = '{0}.png'.format(title)
+            filename = title.replace(" ", "_")
+            full_path = '{0}.png'.format(filename)
             plt.savefig(full_path, bbox_inches='tight')
             print "Successfully wrote {0} to disk\n".format(full_path)
+        else:
+            plt.show()
 
 
     def _plot_subplot(self, df_subset, ax, outer_val, chart_height, alpha, ylabel):
@@ -131,7 +132,7 @@ class plotobject(object):
         # positions of the x-axis ticks (center of the bars as bar labels)
         tick_pos = [i+(bar_width/2) for i in bar_pos]
 
-        # Create first bar plot from data from first response selection
+        # create first bar plot from data from first response selection
         ax.bar(bar_pos,
                 # data from first response
                 df_subset[self.responses[0]],
@@ -148,17 +149,11 @@ class plotobject(object):
         if len(self.responses)>1:
 
             ax.bar(bar_pos,
-                    # data from second response
-                    df_subset[self.responses[1]],
-                    # set the width
+                    df_subset[self.responses[1]], # data from second response
                     width=bar_width,
-                    # with Hillary on the bottom
-                    bottom=df_subset[self.responses[0]],
-                    # with the label
+                    bottom=df_subset[self.responses[0]], # with Hillary on the bottom
                     label=self.responses[1],
-                    # with alpha
                     alpha=alpha,
-                    # with color
                     color=self.color_dict[self.responses[1]])
 
             # set bottom values for next response
@@ -184,15 +179,15 @@ class plotobject(object):
         plt.sca(ax)
         plt.xticks(tick_pos, df_subset[self.inner_segment['label']])
 
-        # set limit
+        # set y-axis limit
         ax.set_ylim(0, chart_height)
 
-        # Set the label and legends
+        # set the labels and legend
         ax.set_ylabel(ylabel)
         ax.set_xlabel(outer_val)
         ax.legend(loc='upper right')
 
-        # Set a buffer around the edge
+        # set a buffer around the edge
         plt.xlim([min(tick_pos)-bar_width, max(tick_pos)+bar_width])
 
 

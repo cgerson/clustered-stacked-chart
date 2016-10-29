@@ -1,5 +1,5 @@
 # clustered-stacked-chart
-Visualize difference in survey results by with two layers of demographic information
+Visualize difference in survey results by two layers of demographic information
 
 ###How to use
 `clustered_stacked_chart.plot(data, my_two_segments = ['Segment1','Segment2'])`,
