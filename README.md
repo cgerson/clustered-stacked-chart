@@ -1,7 +1,12 @@
 # clustered-stacked-chart
 Visualize difference in survey results by with two layers of demographic information
 
-Resources
+###How to use
+`clustered_stacked_chart.plot(data, my_two_segments = ['Segment1','Segment2'])`,
+
+where `Segment1` and `Segment2` are columns in the Pandas DataFrame `data` object.
+
+###Resources
 
 Matplotlib stacked bar chart help: <a href = "http://chrisalbon.com/python/matplotlib_stacked_bar_plot.html">Stacked Bar Plot In MatPlotLib by Chris Albon</a>
 
