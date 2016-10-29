@@ -183,7 +183,7 @@ class plotobject(object):
 
                 fontsize = 13
                 if height < 5:
-                    fontsize = fontsize = (7-height)
+                    fontsize = fontsize - (7-height)
 
                 format_display = "{:.0f}%".format(height)
 
