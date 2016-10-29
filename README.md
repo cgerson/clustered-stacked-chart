@@ -1,6 +1,9 @@
 # clustered-stacked-chart
 Visualize difference in survey results by two layers of demographic information
 
+<img style= "width: 780px;" src="http://cgerson.github.io/images/Election_Preferences_by_Gender_and_Age.png">
+
+
 ###How to use
 `clustered_stacked_chart.plot(data, my_two_segments = ['Segment1','Segment2'])`,
 
