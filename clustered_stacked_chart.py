@@ -187,7 +187,7 @@ class plotobject(object):
 
                 format_display = "{:.0f}%".format(height)
 
-                ax.annotate(format_display, (x * 1.005, (height+y)), xytext = (4,-14), textcoords='offset points', fontsize=13, weight='medium')
+                ax.annotate(format_display, (x * 1.005, (height+y)), xytext = (4,-14), textcoords='offset points', fontsize=fontsize, weight='medium')
 
         # set x ticks
         plt.sca(ax)
