@@ -2,6 +2,8 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 
+import inspect
+
 class plotobject(object):
 
     def __init__(self, data, my_two_segments, clean_segment_values = True):
@@ -46,7 +48,7 @@ class plotobject(object):
         self.df = df
 
 
-    def _plot_all(self, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency"):
+    def _plot_all(self, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency", display_frequencies = True):
 
         """
         Parameters:
@@ -87,7 +89,7 @@ class plotobject(object):
 
             # plot one subplot
             # pass in any other variables from the plot function to make the chart more customizable
-            self._plot_subplot(df_subset, axes[i], outer_val, chart_height, alpha, ylabel)
+            self._plot_subplot(df_subset, axes[i], outer_val, chart_height, alpha, ylabel, display_frequencies)
 
             # format y axis ticks with %
             if i==0:
@@ -116,7 +118,7 @@ class plotobject(object):
             plt.show()
 
 
-    def _plot_subplot(self, df_subset, ax, outer_val, chart_height, alpha, ylabel):
+    def _plot_subplot(self, df_subset, ax, outer_val, chart_height, alpha, ylabel, display_frequencies):
 
         """
         Plots one subplot based on data in df_subset
@@ -175,6 +177,20 @@ class plotobject(object):
                 # set bottom value for next response
                 bottom = [i+j for i,j in zip(df_subset[self.responses[index+1]],bottom)]
 
+        # annotate chart with response frequencies
+        if display_frequencies:
+            for i,patch in enumerate(ax.patches):
+                x,y = patch.get_xy()
+                height = patch.get_height()
+
+                fontsize = 13
+                if height < 5:
+                    fontsize = fontsize = (7-height)
+
+                format_display = "{:.0f}%".format(height)
+
+                ax.annotate(format_display, (x * 1.005, (height+y)), xytext = (4,-14), textcoords='offset points', fontsize=13, weight='medium')
+
         # set x ticks
         plt.sca(ax)
         plt.xticks(tick_pos, df_subset[self.inner_segment['label']])
@@ -191,7 +207,7 @@ class plotobject(object):
         plt.xlim([min(tick_pos)-bar_width, max(tick_pos)+bar_width])
 
 
-def plot(data, my_two_segments, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency", rename_segment_values = False):
+def plot(data, my_two_segments, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency", rename_segment_values = False, display_frequencies = True):
 
     """
     Parameters:
@@ -213,4 +229,4 @@ def plot(data, my_two_segments, title = "Untitled", stylesheet = 'seaborn-darkgr
     if rename_segment_values:
         plotobj._rename_segment_values(rename_segment_values)
 
-    plotobj._plot_all(title = title, stylesheet = stylesheet, chart_height = chart_height, alpha = alpha, bar_width = bar_width, colors = colors, write_to_disk = write_to_disk, ylabel = ylabel)
+    plotobj._plot_all(title = title, stylesheet = stylesheet, chart_height = chart_height, alpha = alpha, bar_width = bar_width, colors = colors, write_to_disk = write_to_disk, ylabel = ylabel, display_frequencies = display_frequencies)
