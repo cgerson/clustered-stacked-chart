@@ -4,11 +4,15 @@ import numpy as np
 
 class plotobject(object):
 
-    def __init__(self, data, my_two_segments, clean_segment_values = True):
+    def __init__(self, data, my_two_segments, clean_segment_values = True, custom_order_outer = False, custom_order_inner = False, custom_order_values = False):
 
         """
         df: pandas DataFrame with shape at least (1,3)
         my_two_segments: list of two columns in df. ex: ["Gender","Age"]
+        custom_ordering_outer: list of strings with desired order for outer label
+        custom_order_inner: list of strings with desired order for inner labels
+        custom_order_values: list of strings with desired order for values (stack order)
+
         """
         # prepare df
 
@@ -20,12 +24,19 @@ class plotobject(object):
 
         assert np.all([segment in df.columns for segment in my_two_segments]), "Both segments are not in dataframe passed"
         # set index to our two segments, ex: Gender and Age
-        df.set_index(my_two_segments, inplace=True) # set multi-level index
+        df = df.set_index(my_two_segments) # set multi-level index
+
+        # allow for custom ordering
+        if custom_order_outer:
+            df = df.reindex(index=custom_order_outer, level=0)
+        if custom_order_inner:
+            df = df.reindex(index=custom_order_inner, level=1)
 
         # set class variables
 
         self.df = df # create DataFrame class object
-        self.responses = df.columns # ex: Trump, Hillary, Other
+
+        self.responses = custom_order_values or df.columns # ex: Trump, Hillary, Other
 
         assert len(self.responses)>=1, "No responses to plot"
 
@@ -104,7 +115,7 @@ class plotobject(object):
                 axes[i].legend().set_visible(False)
 
         # set title
-        fig.suptitle(title, fontsize="x-large")
+        fig.suptitle(title, fontsize=25, family="sans-serif", weight="medium")
         plt.tight_layout(pad=0., w_pad=0.0, h_pad=0.0)
 
         if write_to_disk:
@@ -205,13 +216,16 @@ class plotobject(object):
         plt.xlim([min(tick_pos)-bar_width, max(tick_pos)+bar_width])
 
 
-def plot(data, my_two_segments, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency", rename_segment_values = False, display_frequencies = True):
+def plot(data, my_two_segments, custom_order_outer = False, custom_order_inner = False, custom_order_values = False, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency", rename_segment_values = False, display_frequencies = True):
 
     """
     Parameters:
     -----------
     df: pandas DataFrame with shape at least (1,3)
     my_two_segments: list of two columns in df. ex: ["Gender","Age"]
+    custom_ordering_outer: list of strings with desired order for outer label
+    custom_order_inner: list of strings with desired order for inner labels
+    custom_order_values: list of strings with desired order for values (stack order)
     title: string
     stylesheet: one of matplotlob's stylesheets, found with this command: print(plt.style.available)
     chart_height: default is 120 to ensure legend doesn't block bar chart. assumes responses are frequencies out of 100
@@ -222,7 +236,7 @@ def plot(data, my_two_segments, title = "Untitled", stylesheet = 'seaborn-darkgr
 
     """
 
-    plotobj = plotobject(data, my_two_segments)
+    plotobj = plotobject(data, my_two_segments, custom_order_outer = custom_order_outer, custom_order_inner = custom_order_inner, custom_order_values = custom_order_values)
 
     if rename_segment_values:
         plotobj._rename_segment_values(rename_segment_values)
