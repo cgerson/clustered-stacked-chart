@@ -1,5 +1,6 @@
 import re
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 
 class plotobject(object):
@@ -43,7 +44,6 @@ class plotobject(object):
         self.outer_segment = {'label': my_two_segments[0], 'level':0} # ex: Gender
         self.inner_segment = {'label': my_two_segments[1], 'level':1} # ex: Age
 
-
     def _rename_segment_values(self, segment_and_segment_mapping):
 
         # ex: "Gender", {"Female": "Women", "Male": "Men"}
@@ -57,7 +57,7 @@ class plotobject(object):
         self.df = df
 
 
-    def _plot_all(self, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency", display_frequencies = True):
+    def _plot_all(self, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency", display_frequencies = True, fontfamily = 'serif', display_y_axis = True):
 
         """
         Parameters:
@@ -71,7 +71,8 @@ class plotobject(object):
 
         """
 
-        plt.style.use(stylesheet)
+        if stylesheet:
+            plt.style.use(stylesheet)
 
         # set colors for each responses or use default colors here
         colors = colors or ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf"]
@@ -89,7 +90,7 @@ class plotobject(object):
         # set the bar width
         self.bar_width = bar_width or float(6)/num_of_bars
 
-        fig, axes = plt.subplots(nrows=1, ncols=num_of_plots, figsize=(12+num_of_plots,6))
+        fig, axes = plt.subplots(nrows=1, ncols=num_of_plots, figsize=(10+num_of_plots,6))
 
         for i, outer_val in enumerate(outer_segment_values):
 
@@ -106,7 +107,10 @@ class plotobject(object):
                 axes[i].set_yticklabels(['{:.0f}%'.format(x) for x in vals])
 
             # only visualize the y label on the left-most subplot
-            if i!=0:
+            if display_y_axis and i!=0:
+                axes[i].set_ylabel("")
+                axes[i].set_yticklabels("")
+            elif not display_y_axis:
                 axes[i].set_ylabel("")
                 axes[i].set_yticklabels("")
 
@@ -114,8 +118,12 @@ class plotobject(object):
             if i!=num_of_plots-1:
                 axes[i].legend().set_visible(False)
 
+        plt.rcParams['axes.facecolor']='white'
+        plt.rcParams['savefig.facecolor']='white'
+        mpl.rc('font',family=fontfamily)
+
         # set title
-        fig.suptitle(title, fontsize=25, family="sans-serif", weight="medium")
+        fig.suptitle(title, fontsize=22, weight="bold")
         plt.tight_layout(pad=0., w_pad=0.0, h_pad=0.0)
 
         if write_to_disk:
@@ -192,13 +200,15 @@ class plotobject(object):
                 x,y = patch.get_xy()
                 height = patch.get_height()
 
-                fontsize = 13
+                fontsize = 14
                 if height < 5:
                     fontsize = fontsize - (7-height)
 
                 format_display = "{:.0f}%".format(height)
 
-                ax.annotate(format_display, (x * 1.005, (height+y)), xytext = (4,-14), textcoords='offset points', fontsize=fontsize, weight='medium')
+                ax.annotate(format_display, (x * 1.005, (height+y)), xytext = (4,-18),
+                                                    textcoords='offset points', fontsize=fontsize,
+                                                    weight='bold', color='white', family = 'sans-serif')
 
         # set x ticks
         plt.sca(ax)
@@ -209,14 +219,14 @@ class plotobject(object):
 
         # set the labels and legend
         ax.set_ylabel(ylabel)
-        ax.set_xlabel(outer_val)
-        ax.legend(loc='upper right')
+        ax.set_xlabel("\n"+outer_val)
+        ax.legend(loc='upper right', fontsize=12)
 
         # set a buffer around the edge
         plt.xlim([min(tick_pos)-bar_width, max(tick_pos)+bar_width])
 
 
-def plot(data, my_two_segments, custom_order_outer = False, custom_order_inner = False, custom_order_values = False, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency", rename_segment_values = False, display_frequencies = True):
+def plot(data, my_two_segments, custom_order_outer = False, custom_order_inner = False, custom_order_values = False, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency", rename_segment_values = False, display_frequencies = True, fontfamily = 'serif', display_y_axis = True):
 
     """
     Parameters:
@@ -233,6 +243,9 @@ def plot(data, my_two_segments, custom_order_outer = False, custom_order_inner =
     bar_width: set the bar_width (recommend around 0.80 depending on number of bars), or allow it to be set programmatically
     colors: list of hex values, or use the default
     rename_segment_values: tuple where first element is segment label, second element is a mapping of new values. ex: ("Gender", {"Female": "Women", "Male": "Men"})
+    display_frequencies: boolean, default True
+    fontfamily: string, default 'serif'
+    display_y_axis: boolean, default True
 
     """
 
@@ -241,4 +254,4 @@ def plot(data, my_two_segments, custom_order_outer = False, custom_order_inner =
     if rename_segment_values:
         plotobj._rename_segment_values(rename_segment_values)
 
-    plotobj._plot_all(title = title, stylesheet = stylesheet, chart_height = chart_height, alpha = alpha, bar_width = bar_width, colors = colors, write_to_disk = write_to_disk, ylabel = ylabel, display_frequencies = display_frequencies)
+    plotobj._plot_all(title = title, stylesheet = stylesheet, chart_height = chart_height, alpha = alpha, bar_width = bar_width, colors = colors, write_to_disk = write_to_disk, ylabel = ylabel, display_frequencies = display_frequencies, fontfamily = fontfamily, display_y_axis = display_y_axis)
