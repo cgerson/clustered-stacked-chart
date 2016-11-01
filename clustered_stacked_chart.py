@@ -90,6 +90,7 @@ class plotobject(object):
         # set the bar width
         self.bar_width = bar_width or float(6)/num_of_bars
 
+        # TODO: update figsize more intelligently
         fig, axes = plt.subplots(nrows=1, ncols=num_of_plots, figsize=(10+num_of_plots,6))
 
         for i, outer_val in enumerate(outer_segment_values):
@@ -106,7 +107,7 @@ class plotobject(object):
                 vals = axes[i].get_yticks()
                 axes[i].set_yticklabels(['{:.0f}%'.format(x) for x in vals])
 
-            # only visualize the y label on the left-most subplot
+            # only visualize the y label on the left-most subplot, if desired
             if display_y_axis and i!=0:
                 axes[i].set_ylabel("")
                 axes[i].set_yticklabels("")
@@ -118,8 +119,12 @@ class plotobject(object):
             if i!=num_of_plots-1:
                 axes[i].legend().set_visible(False)
 
-        plt.rcParams['axes.facecolor']='white'
-        plt.rcParams['savefig.facecolor']='white'
+        # if no stylesheet selected, set background to white (for now)
+        if not stylesheet:
+            plt.rcParams['axes.facecolor']='white'
+            plt.rcParams['savefig.facecolor']='white'
+
+        # set font
         mpl.rc('font',family=fontfamily)
 
         # set title
@@ -206,6 +211,7 @@ class plotobject(object):
 
                 format_display = "{:.0f}%".format(height)
 
+                # TODO: update color based on bar color (i.e. white v black)
                 ax.annotate(format_display, (x * 1.005, (height+y)), xytext = (4,-18),
                                                     textcoords='offset points', fontsize=fontsize,
                                                     weight='bold', color='white', family = 'sans-serif')
