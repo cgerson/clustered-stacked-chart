@@ -5,7 +5,7 @@ import numpy as np
 
 class plotobject(object):
 
-    def __init__(self, data, my_two_segments, clean_segment_values = True, custom_order_outer = False, custom_order_inner = False, custom_order_values = False):
+    def __init__(self, data, my_two_segments, sample_size, clean_segment_values = True, custom_order_outer = False, custom_order_inner = False, custom_order_values = False):
 
         """
         df: pandas DataFrame with shape at least (1,3)
@@ -41,6 +41,8 @@ class plotobject(object):
 
         assert len(self.responses)>=1, "No responses to plot"
 
+        self.sample_size = sample_size
+
         self.outer_segment = {'label': my_two_segments[0], 'level':0} # ex: Gender
         self.inner_segment = {'label': my_two_segments[1], 'level':1} # ex: Age
 
@@ -75,7 +77,7 @@ class plotobject(object):
             plt.style.use(stylesheet)
 
         # set colors for each responses or use default colors here
-        colors = colors or ["#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf"]
+        colors = colors or ["#4daf4a", "#377eb8", "#e41a1c", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf"]
         assert len(colors)>=len(self.responses), "Number of color choices is less than number of responses"
         self.color_dict = {k:v for k,v in zip(self.responses, colors)}
 
@@ -100,7 +102,7 @@ class plotobject(object):
 
             # plot one subplot
             # pass in any other variables from the plot function to make the chart more customizable
-            self._plot_subplot(df_subset, axes[i], outer_val, chart_height, alpha, ylabel, display_frequencies)
+            self._plot_subplot(df_subset, axes[i], outer_val, chart_height, alpha, ylabel, display_frequencies, fontfamily)
 
             # format y axis ticks with %
             if i==0:
@@ -128,7 +130,10 @@ class plotobject(object):
         mpl.rc('font',family=fontfamily)
 
         # set title
-        fig.suptitle(title, fontsize=22, weight="bold")
+        full_title = "\n"+title+"\n{0} Responses".format(self.sample_size) if self.sample_size else "\n"+title
+
+        fig.suptitle(full_title, fontsize=20, weight="bold")
+
         plt.tight_layout(pad=0., w_pad=0.0, h_pad=0.0)
 
         if write_to_disk:
@@ -140,7 +145,7 @@ class plotobject(object):
             plt.show()
 
 
-    def _plot_subplot(self, df_subset, ax, outer_val, chart_height, alpha, ylabel, display_frequencies):
+    def _plot_subplot(self, df_subset, ax, outer_val, chart_height, alpha, ylabel, display_frequencies, fontfamily):
 
         """
         Plots one subplot based on data in df_subset
@@ -206,6 +211,11 @@ class plotobject(object):
                 height = patch.get_height()
 
                 fontsize = 14
+
+                # if not value, do not display 0%
+                if height == 0:
+                    continue
+
                 if height < 5:
                     fontsize = fontsize - (7-height)
 
@@ -214,25 +224,26 @@ class plotobject(object):
                 # TODO: update color based on bar color (i.e. white v black)
                 ax.annotate(format_display, (x * 1.005, (height+y)), xytext = (4,-18),
                                                     textcoords='offset points', fontsize=fontsize,
-                                                    weight='bold', color='white', family = 'sans-serif')
+                                                    weight='bold', color='white', family = fontfamily)
 
         # set x ticks
         plt.sca(ax)
-        plt.xticks(tick_pos, df_subset[self.inner_segment['label']])
+        plt.xticks(tick_pos, df_subset[self.inner_segment['label']], fontsize = 12)
 
         # set y-axis limit
         ax.set_ylim(0, chart_height)
 
         # set the labels and legend
         ax.set_ylabel(ylabel)
-        ax.set_xlabel("\n"+outer_val)
-        ax.legend(loc='upper right', fontsize=12)
+        ax.set_xlabel("\n"+outer_val, fontsize = 14, weight='bold')
+        #ax.legend(loc='upper right', fontsize=12)
+        ax.legend(bbox_to_anchor=(.90, 1), loc=2, borderaxespad=0., fontsize=14)
 
         # set a buffer around the edge
         plt.xlim([min(tick_pos)-bar_width, max(tick_pos)+bar_width])
 
 
-def plot(data, my_two_segments, custom_order_outer = False, custom_order_inner = False, custom_order_values = False, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency", rename_segment_values = False, display_frequencies = True, fontfamily = 'serif', display_y_axis = True):
+def plot(data, my_two_segments, sample_size = None, custom_order_outer = False, custom_order_inner = False, custom_order_values = False, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency", rename_segment_values = False, display_frequencies = True, fontfamily = 'serif', display_y_axis = True):
 
     """
     Parameters:
@@ -243,7 +254,7 @@ def plot(data, my_two_segments, custom_order_outer = False, custom_order_inner =
     custom_order_inner: list of strings with desired order for inner labels
     custom_order_values: list of strings with desired order for values (stack order)
     title: string
-    stylesheet: one of matplotlob's stylesheets, found with this command: print(plt.style.available)
+    stylesheet: one of matplotlob's stylesheets, found with this command: print(plt.style.available). Set to None to get white background
     chart_height: default is 120 to ensure legend doesn't block bar chart. assumes responses are frequencies out of 100
     alpha: controls transparency of bars
     bar_width: set the bar_width (recommend around 0.80 depending on number of bars), or allow it to be set programmatically
@@ -255,7 +266,7 @@ def plot(data, my_two_segments, custom_order_outer = False, custom_order_inner =
 
     """
 
-    plotobj = plotobject(data, my_two_segments, custom_order_outer = custom_order_outer, custom_order_inner = custom_order_inner, custom_order_values = custom_order_values)
+    plotobj = plotobject(data, my_two_segments, sample_size = sample_size, custom_order_outer = custom_order_outer, custom_order_inner = custom_order_inner, custom_order_values = custom_order_values)
 
     if rename_segment_values:
         plotobj._rename_segment_values(rename_segment_values)
