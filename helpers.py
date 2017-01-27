@@ -10,11 +10,26 @@ def rename_labels(df, column, mapping):
 
     return df
 
-def transform_for_clustered_chart(df, values, column1, column2):
+def transform_for_clustered_chart(df, values, column1, column2 = None, demo = None):
 
-    sub = df[df['question'].isin([values, column1, column2])][['answer','question','sessionId']].set_index('sessionId')
+    if demo:
+        subset_by = [values, column1]
+    else:
+        subset_by = [values, column1, column2]
 
-    pivoted = sub.pivot(columns='question',values='answer')
+    sub = df[df['question'].isin(subset_by)][['answer','question','sessionId']].set_index('sessionId')
+    pivot_all = sub.pivot(columns='question',values='answer')
+
+    if demo:
+        column2 = demo
+        demos = df[['sessionId',demo]].drop_duplicates().set_index('sessionId')
+        pivot_all = pivot_all.merge(demos, how='inner', left_index=True, right_index=True)
+
+    pivoted = pivot_all[[column1,column2,values]].copy()
+
+    pivoted.dropna(how='any', inplace=True)
+
+    print "sample_size", len(pivoted)
 
     df_sub = pd.DataFrame(pivoted.groupby([column2,
                                            column1,
@@ -22,7 +37,7 @@ def transform_for_clustered_chart(df, values, column1, column2):
 
     df_sub = df_sub.rename(columns={0:'values'})
 
-    df_sub_pivoted = df_sub.pivot_table(values='values',index=[column1,column2], columns=values)
+    df_sub_pivoted = df_sub.pivot_table(values='values',index=[column1,column2], columns=values, fill_value=0)
 
     df_sub_pivoted = df_sub_pivoted.apply(lambda x: x*100/sum(x), axis=1)
 

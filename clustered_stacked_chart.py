@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import numpy as np
 
+from textwrap import wrap
+
 class plotobject(object):
 
     def __init__(self, data, my_two_segments, sample_size, clean_segment_values = True, custom_order_outer = False, custom_order_inner = False, custom_order_values = False):
@@ -59,7 +61,7 @@ class plotobject(object):
         self.df = df
 
 
-    def _plot_all(self, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency", display_frequencies = True, fontfamily = 'serif', display_y_axis = True):
+    def _plot_all(self, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency", display_frequencies = True, fontfamily = 'serif', display_y_axis = True, wrap_x_label_char = 10):
 
         """
         Parameters:
@@ -76,9 +78,21 @@ class plotobject(object):
         if stylesheet:
             plt.style.use(stylesheet)
 
+        # if no stylesheet selected, set background to white (for now)
+        else:
+            plt.rcParams['axes.facecolor']='white'
+            plt.rcParams['savefig.facecolor']='white'
+
+
         # set colors for each responses or use default colors here
-        colors = colors or ["#4daf4a", "#377eb8", "#e41a1c", "#984ea3", "#ff7f00", "#ffff33", "#a65628", "#f781bf"]
+        colors = ['#2196f3','#8BC34A','#FFC107']
+        extra_colors = ["#377eb8", "#e41a1c", "#984ea3", "#4daf4a", "#ff7f00", "#ff0066", "#a65628", "#f781bf"]
+
+        while len(colors)<len(self.responses):
+            colors.append(extra_colors.pop())
+
         assert len(colors)>=len(self.responses), "Number of color choices is less than number of responses"
+
         self.color_dict = {k:v for k,v in zip(self.responses, colors)}
 
         # fetch unique values for each segment to calculate number of subplots and bar width
@@ -102,7 +116,7 @@ class plotobject(object):
 
             # plot one subplot
             # pass in any other variables from the plot function to make the chart more customizable
-            self._plot_subplot(df_subset, axes[i], outer_val, chart_height, alpha, ylabel, display_frequencies, fontfamily)
+            self._plot_subplot(df_subset, axes[i], outer_val, chart_height, alpha, ylabel, display_frequencies, fontfamily, wrap_x_label_char)
 
             # format y axis ticks with %
             if i==0:
@@ -120,11 +134,6 @@ class plotobject(object):
             # only visualize the legend on the right-most subplot
             if i!=num_of_plots-1:
                 axes[i].legend().set_visible(False)
-
-        # if no stylesheet selected, set background to white (for now)
-        if not stylesheet:
-            plt.rcParams['axes.facecolor']='white'
-            plt.rcParams['savefig.facecolor']='white'
 
         # set font
         mpl.rc('font',family=fontfamily)
@@ -145,7 +154,7 @@ class plotobject(object):
             plt.show()
 
 
-    def _plot_subplot(self, df_subset, ax, outer_val, chart_height, alpha, ylabel, display_frequencies, fontfamily):
+    def _plot_subplot(self, df_subset, ax, outer_val, chart_height, alpha, ylabel, display_frequencies, fontfamily, wrap_x_label_char):
 
         """
         Plots one subplot based on data in df_subset
@@ -210,25 +219,29 @@ class plotobject(object):
                 x,y = patch.get_xy()
                 height = patch.get_height()
 
-                fontsize = 14
+                fontsize = 13
 
-                # if not value, do not display 0%
-                if height == 0:
+                # if value is small, do not display 0%
+                # TODO consider moving label above bar
+                if height < 5:
                     continue
 
-                if height < 5:
-                    fontsize = fontsize - (7-height)
+                if height <=7:
+                    fontsize = 11
 
                 format_display = "{:.0f}%".format(height)
 
                 # TODO: update color based on bar color (i.e. white v black)
-                ax.annotate(format_display, (x * 1.005, (height+y)), xytext = (4,-18),
+                ax.annotate(format_display, (x * 1.005, (height+y)), xytext = (4,-12),
                                                     textcoords='offset points', fontsize=fontsize,
                                                     weight='bold', color='white', family = fontfamily)
 
         # set x ticks
         plt.sca(ax)
-        plt.xticks(tick_pos, df_subset[self.inner_segment['label']], fontsize = 12)
+        x_labels = df_subset[self.inner_segment['label']]
+        x_labels = [ '\n'.join(wrap(l, wrap_x_label_char)) for l in x_labels ]
+        print x_labels
+        plt.xticks(tick_pos, x_labels, fontsize = 12)
 
         # set y-axis limit
         ax.set_ylim(0, chart_height)
@@ -237,13 +250,13 @@ class plotobject(object):
         ax.set_ylabel(ylabel)
         ax.set_xlabel("\n"+outer_val, fontsize = 14, weight='bold')
         #ax.legend(loc='upper right', fontsize=12)
-        ax.legend(bbox_to_anchor=(.90, 1), loc=2, borderaxespad=0., fontsize=14)
+        ax.legend(bbox_to_anchor=(.90, 1), loc=2, borderaxespad=0.5, fontsize=12)
 
         # set a buffer around the edge
         plt.xlim([min(tick_pos)-bar_width, max(tick_pos)+bar_width])
 
 
-def plot(data, my_two_segments, sample_size = None, custom_order_outer = False, custom_order_inner = False, custom_order_values = False, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency", rename_segment_values = False, display_frequencies = True, fontfamily = 'serif', display_y_axis = True):
+def plot(data, my_two_segments, sample_size = None, custom_order_outer = False, custom_order_inner = False, custom_order_values = False, title = "Untitled", stylesheet = 'seaborn-darkgrid', chart_height = 120, alpha = 0.8, bar_width = None, colors = None, write_to_disk = False, ylabel = "Response Frequency", rename_segment_values = False, display_frequencies = True, fontfamily = 'serif', display_y_axis = True, wrap_x_label_char = 10):
 
     """
     Parameters:
@@ -271,4 +284,4 @@ def plot(data, my_two_segments, sample_size = None, custom_order_outer = False, 
     if rename_segment_values:
         plotobj._rename_segment_values(rename_segment_values)
 
-    plotobj._plot_all(title = title, stylesheet = stylesheet, chart_height = chart_height, alpha = alpha, bar_width = bar_width, colors = colors, write_to_disk = write_to_disk, ylabel = ylabel, display_frequencies = display_frequencies, fontfamily = fontfamily, display_y_axis = display_y_axis)
+    plotobj._plot_all(title = title, stylesheet = stylesheet, chart_height = chart_height, alpha = alpha, bar_width = bar_width, colors = colors, write_to_disk = write_to_disk, ylabel = ylabel, display_frequencies = display_frequencies, fontfamily = fontfamily, display_y_axis = display_y_axis, wrap_x_label_char = wrap_x_label_char)
