@@ -23,7 +23,7 @@ class plotobject(object):
 
         if clean_segment_values: # remove reference information in parenthesis if exists
             for segment in my_two_segments:
-                df[segment] = df[segment].map(lambda x: re.sub(r'\([^)]*\)', '', x))
+                df[segment] = df[segment].map(lambda x: re.sub(r'\([^)]*\)', '', x).strip(u'\u200b')) #strip weird unicode too
 
         assert np.all([segment in df.columns for segment in my_two_segments]), "Both segments are not in dataframe passed"
         # set index to our two segments, ex: Gender and Age
@@ -146,8 +146,12 @@ class plotobject(object):
         plt.tight_layout(pad=0., w_pad=0.0, h_pad=0.0)
 
         if write_to_disk:
+            # make filename unique by adding timestamp
+            import time
+            timestamp = time.ctime()
+
             filename = title.replace(" ", "_")
-            full_path = '{0}.png'.format(filename)
+            full_path = '{0}-{1}.png'.format(filename, timestamp)
             plt.savefig(full_path, bbox_inches='tight')
             print "Successfully wrote {0} to disk\n".format(full_path)
         else:
@@ -239,8 +243,8 @@ class plotobject(object):
         # set x ticks
         plt.sca(ax)
         x_labels = df_subset[self.inner_segment['label']]
-        x_labels = [ '\n'.join(wrap(l, wrap_x_label_char)) for l in x_labels ]
-        print x_labels
+        x_labels = [ '\n'.join(wrap(l.strip(u'\u200b'), wrap_x_label_char)) for l in x_labels ] #strip weird unicode too
+        #print x_labels
         plt.xticks(tick_pos, x_labels, fontsize = 12)
 
         # set y-axis limit
